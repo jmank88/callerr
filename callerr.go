@@ -6,23 +6,30 @@ import (
 	"runtime"
 )
 
-type callerErr struct {
-	cause  error
-	caller string
+// New returns an error with caller info.
+func New(msg string) error {
+	return newCallerErr(errors.New(msg))
 }
 
-func newcallerErr(err error) *callerErr {
-	var caller string
-	_, file, line, ok := runtime.Caller(2)
-	if ok {
-		caller = fmt.Sprintf("%s:%d", file, line)
-	} else {
-		caller = "caller unknown"
+// Format returns a formatted error with caller info.
+func Format(msg string, args ...any) error {
+	return newCallerErr(fmt.Errorf(msg, args...))
+}
+
+type callerErr struct {
+	cause  error
+	caller *caller
+}
+
+func newCallerErr(err error) *callerErr {
+	c := callerErr{cause: err}
+	if _, file, line, ok := runtime.Caller(2); ok {
+		c.caller = &caller{
+			file: file,
+			line: line,
+		}
 	}
-	return &callerErr{
-		cause:  err,
-		caller: caller,
-	}
+	return &c
 }
 
 func (e *callerErr) Error() string {
@@ -36,10 +43,14 @@ func (e *callerErr) Is(err error) bool {
 	return ok
 }
 
-func New(msg string) error {
-	return newcallerErr(errors.New(msg))
+type caller struct {
+	file string
+	line int
 }
 
-func Format(msg string, args ...any) error {
-	return newcallerErr(fmt.Errorf(msg, args...))
+func (c *caller) String() string {
+	if c == nil {
+		return "caller unknown"
+	}
+	return fmt.Sprintf("%s:%d", c.file, c.line)
 }

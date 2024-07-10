@@ -15,8 +15,8 @@ var basepath string
 func init() {
 	_, file, _, ok := runtime.Caller(0)
 	if ok {
-		// drop pkg/callerErr/callerr_test.go
-		file = filepath.Dir(file) // drop callerr_test.go
+		// drop callerr/callerr_test.go
+		file = filepath.Dir(file) // drop callerr_test.go`
 		file = filepath.Dir(file) // drop callerr
 		basepath = file
 	}
