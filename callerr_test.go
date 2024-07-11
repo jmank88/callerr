@@ -1,6 +1,7 @@
 package callerr
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -23,10 +24,10 @@ func init() {
 }
 
 func TestNew(t *testing.T) {
+	line := nextLineNumber(t)
 	err := New("test")
 	assert.Equal(t, fmt.Sprintf(`
-[%s/callerr/callerr_test.go:26] test`, basepath), err.Error())
-	assert.ErrorIs(t, err, &callerErr{})
+[%s/callerr/callerr_test.go:%d] test`, basepath, line), err.Error())
 }
 
 func TestFormat(t *testing.T) {
@@ -34,16 +35,16 @@ func TestFormat(t *testing.T) {
 		bazLine := nextLineNumber(t)
 		bazErr := New("baz")
 		line := nextLineNumber(t)
-		err := Format("foo: %w", Format("bar: %s", bazErr))
+		err := Format("foo: %w", Format("bar: %w", bazErr))
 		got := err.Error()
 		assert.Equal(t, got, fmt.Sprintf(`
 [%[1]s/callerr/callerr_test.go:%[2]d] foo: 
 [%[1]s/callerr/callerr_test.go:%[2]d] bar: 
 [%[1]s/callerr/callerr_test.go:%[3]d] baz`, basepath, line, bazLine))
 
-		var ce *callerErr
-		require.ErrorAs(t, err, &ce)
-		assert.ErrorIs(t, ce.cause, bazErr)
+		cause := errors.Unwrap(err)
+		require.NotNil(t, cause)
+		assert.ErrorIs(t, cause, bazErr)
 		assert.ErrorIs(t, err, bazErr)
 	})
 
