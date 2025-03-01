@@ -1,8 +1,6 @@
 package callerr_test
 
 import (
-	"fmt"
-
 	"github.com/jmank88/callerr"
 )
 
@@ -22,8 +20,8 @@ func c() error {
 	return callerr.New("original error")
 }
 
-func Example() {
+func ExamplePrintln() {
 	if err := a(); err != nil {
-		fmt.Println("Failed to a:", err)
+		callerr.Println("Failed to a: %v", err)
 	}
 }
